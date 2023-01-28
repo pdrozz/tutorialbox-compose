@@ -39,9 +39,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             TutorialBoxComposeTheme {
 
-                Scaffold(
-
-                ) { paddingValues ->
+                Scaffold { paddingValues ->
                     Column(
                         modifier = Modifier
                             .fillMaxSize()

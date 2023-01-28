@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "TutorialBox Compose"
-include ':app'
+include ':sample'

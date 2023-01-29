@@ -10,7 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.layout.LayoutCoordinates
 
 class TutorialBoxState internal constructor(
-    initialIndex: Int,
+    internal val initialIndex: Int,
 ) {
 
     internal var tutorialTargets = mutableStateMapOf<Int, TutorialBoxTarget>()

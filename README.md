@@ -25,7 +25,7 @@ allprojects {
 }
 
 dependencies {
-  implementation 'com.github.pdrozz:tutorialbox-compose:1.0.0-alpha'
+  implementation 'com.github.pdrozz:tutorialbox-compose:1.0.0-alpha1'
 }
 ```
 

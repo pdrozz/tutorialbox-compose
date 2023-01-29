@@ -224,7 +224,7 @@ class TutorialBoxScope(
                             safeY += composeHeight + (18)
                         } else if (safeY - composeHeight - tutorialHeight > 0) {
                             // is safe to draw top to content
-                            safeY -= (tutorialHeight)
+                            safeY -= (tutorialHeight + 18)
                         }
                     }
                     safeY

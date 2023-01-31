@@ -25,7 +25,7 @@ allprojects {
 }
 
 dependencies {
-  implementation 'com.github.pdrozz:tutorialbox-compose:1.0.0-alpha'
+  implementation 'com.github.pdrozz:tutorialbox-compose:1.0.0'
 }
 ```
 
@@ -128,8 +128,3 @@ TutorialBox(
 
 # Bugs and Feedback
 For bugs, questions and discussions please use the [Github Issues](https://github.com/pdrozz/tutorialbox-compose/issues).
-
-### Known issues:
-- The tutorial target animation is not playing,
-- Horizontal position of target has inconsistent calculations generating recomposition
-- Optimization of target position calculation

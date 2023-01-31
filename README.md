@@ -35,8 +35,6 @@ dependencies {
 
 Wrap your compose content with TutorialBox
 
-#### XML
-
 ``` kotlin
 val showTutorial = remember {
   mutableState = true

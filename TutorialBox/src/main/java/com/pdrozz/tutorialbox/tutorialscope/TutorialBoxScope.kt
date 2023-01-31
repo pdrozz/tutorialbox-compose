@@ -1,9 +1,11 @@
 package com.pdrozz.tutorialbox.tutorialscope
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -31,7 +33,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
 import androidx.compose.ui.graphics.ClipOp
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.pdrozz.tutorialbox.state.TutorialBoxState
 import com.pdrozz.tutorialbox.state.TutorialBoxTarget
+import kotlin.math.roundToInt
 
 class TutorialBoxScope(
     private val state: TutorialBoxState,
@@ -68,8 +70,7 @@ class TutorialBoxScope(
         index: Int,
         title: String,
         description: String? = null
-    ): Modifier = tutorialTarget(
-        state = state,
+    ): Modifier = markForTutorial(
         index = index,
         content = {
             TutorialText(title = title, description = description)
@@ -85,7 +86,10 @@ class TutorialBoxScope(
     ) {
         TutorialFocusBox(currentContent = state.currentTarget)
 
-        TutorialTarget(currentContent = state.currentTarget, constraints)
+        TutorialTarget(
+            currentContent = state.currentTarget,
+            constraints = constraints
+        )
 
         TutorialClickHandler {
             state.currentTargetIndex++
@@ -108,7 +112,7 @@ class TutorialBoxScope(
             state?.let { content ->
                 Canvas(modifier = Modifier.fillMaxSize(), onDraw = {
                     val cornerRadius = 18f
-                    val focusPadding = 10
+                    val focusPadding = 8
                     val offSetInRoot = content.coordinates.positionInRoot()
                     val contentSize = content.coordinates.size
 
@@ -119,14 +123,16 @@ class TutorialBoxScope(
                                 top = offSetInRoot.y - focusPadding,
                                 right = offSetInRoot.x + contentSize.width.toFloat() + focusPadding,
                                 bottom = offSetInRoot.y + contentSize.height.toFloat() + focusPadding,
-                                cornerRadius,
-                                cornerRadius
+                                radiusX = cornerRadius,
+                                radiusY = cornerRadius
                             )
                         )
                     }
                     clipPath(pathToClip, clipOp = ClipOp.Difference) {
                         drawRect(
-                            SolidColor(Color.Black.copy(alpha = 0.6f)),
+                            SolidColor(
+                                value = Color.Black.copy(alpha = 0.6f)
+                            ),
                             topLeft = Offset(0f, 0f)
                         )
                     }
@@ -137,12 +143,6 @@ class TutorialBoxScope(
 
     @Composable
     private fun TutorialTarget(currentContent: TutorialBoxTarget?, constraints: Constraints) {
-        val alpha = remember { Animatable(0f) }
-
-        LaunchedEffect(currentContent) {
-            alpha.animateTo(1f, tween(500))
-        }
-
         currentContent?.let { tutorialContent ->
             val composeWidth = remember(tutorialContent) {
                 tutorialContent.coordinates.size.width
@@ -164,12 +164,14 @@ class TutorialBoxScope(
             val xWithDisplacement by remember(x, composeWidth, tutorialSize) {
                 derivedStateOf {
                     val displacement = calculateDisplacementToMid(
-                        startX = x, composeWidth = composeWidth, tutorialComposeWidth = tutorialSize.width
+                        startX = x,
+                        composeWidth = composeWidth,
+                        tutorialComposeWidth = tutorialSize.width
                     )
 
                     val xWithDisplacement = x + displacement
 
-                    if(xWithDisplacement < 0) 0
+                    if (xWithDisplacement < 0) 0
                     else if (xWithDisplacement + tutorialSize.width > constraints.maxWidth) xWithDisplacement
                     else xWithDisplacement
                 }
@@ -214,7 +216,7 @@ class TutorialBoxScope(
 
                     val isTutorialInFrontOfContent =
                         (safeY >= y && safeY <= (y + composeHeight)) ||
-                                !(safeY <= y  && safeY >= (y + composeHeight))
+                                !(safeY <= y && safeY >= (y + composeHeight))
 
                     if (isTutorialInFrontOfContent) {
                         val tutorialHeight = tutorialSize.height
@@ -231,21 +233,40 @@ class TutorialBoxScope(
                 }
             }
 
-            Box(
+            val xAnimated = remember { Animatable(0f) }
+            val yAnimated = remember { Animatable(0f) }
+            var visible by remember(tutorialContent.index) { mutableStateOf(false) }
+
+            LaunchedEffect(key1 = xToDraw, key2 = yToDraw) {
+                xAnimated.animateTo(xToDraw.toFloat(), tween(50, delayMillis = 0))
+                yAnimated.animateTo(yToDraw.toFloat(), tween(50, delayMillis = 0))
+                visible = true
+            }
+
+            AnimatedVisibility(
                 modifier = Modifier
-                    .alpha(alpha.value)
                     .onSizeChanged { tutorialSize = it }
                     .offset {
-                        IntOffset(xToDraw, yToDraw)
-                    }
+                        IntOffset(
+                            x = xAnimated.value.roundToInt(),
+                            y = yAnimated.value.roundToInt()
+                        )
+                    },
+                enter = fadeIn(tween(200, delayMillis = 100, easing = FastOutLinearInEasing)),
+                exit = fadeOut(tween(50, delayMillis = 0)),
+                visible = visible
             ) {
-                tutorialContent.content(this)
+                if (visible) {
+                    Box {
+                        tutorialContent.content(this)
+                    }
+                }
             }
         }
     }
 
     @Composable
-    private fun TutorialClickHandler(onTutorialClick: () -> Unit){
+    private fun TutorialClickHandler(onTutorialClick: () -> Unit) {
         Box(
             modifier = Modifier
                 .fillMaxSize()

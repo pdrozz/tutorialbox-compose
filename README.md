@@ -25,7 +25,7 @@ allprojects {
 }
 
 dependencies {
-  implementation 'com.github.pdrozz:tutorialbox-compose:1.0.0'
+  implementation 'com.github.pdrozz:tutorialbox-compose:1.1.0'
 }
 ```
 
@@ -71,13 +71,28 @@ Inside the TutorialBoxScope adds the **Modidier.markForTutorial()** in the conte
 )
 ```
 
-or customize with your compose layout.
+or there is two ways to customize with your compose layout.
 
+#### TutorialBox -> Provide a custom layout in TutorialBox
+``` Kotlin
+TutorialBox(
+    state = rememberTutorialBoxState(),
+    showTutorial = showTutorial,
+    onTutorialCompleted = {
+        showTutorial = false
+    },
+    tutorialTarget = { index ->
+      CustomCompose(index)
+    }
+){
+```
+
+#### Modifier -> Provide a custom layout in **Modifier.markForTutorial**
 ``` Kotlin
 .markForTutorial(
     index = 0,
     content = {
-        CustomCompose()
+        CustomTutorialCompose()
     }
 )
 ```

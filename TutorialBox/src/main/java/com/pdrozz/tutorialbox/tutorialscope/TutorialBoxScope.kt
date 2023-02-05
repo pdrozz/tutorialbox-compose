@@ -3,7 +3,6 @@ package com.pdrozz.tutorialbox.tutorialscope
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutLinearInEasing
 import androidx.compose.animation.core.tween
@@ -11,19 +10,12 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.with
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
@@ -31,7 +23,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.RoundRect
@@ -43,12 +34,10 @@ import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
-import androidx.compose.ui.unit.dp
+import com.pdrozz.tutorialbox.components.TutorialText
 import com.pdrozz.tutorialbox.state.TutorialBoxState
 import com.pdrozz.tutorialbox.state.TutorialBoxTarget
 import kotlin.math.roundToInt
@@ -57,15 +46,26 @@ class TutorialBoxScope(
     private val state: TutorialBoxState,
 ) {
 
+    /**
+     * markForTutorial will adds a tag in the content to TutorialBox draws the [content]
+     * using the order of the [index].
+     *
+     * But if [content] is not defined or is null, the TutorialBox will use the
+     * [TutoriaBox(tutorialTarget: @Composable (index: Int) -> Unit]
+     */
     fun Modifier.markForTutorial(
         index: Int,
-        content: @Composable BoxScope.() -> Unit,
+        content: (@Composable BoxScope.() -> Unit)? = null,
     ): Modifier = tutorialTarget(
         state = state,
         index = index,
         content = content,
     )
 
+    /**
+     * markForTutorial will adds a tag in the content to TutorialBox draws a simple Compose
+     * with [title] and [description] using the order of the [index].
+     */
     fun Modifier.markForTutorial(
         index: Int,
         title: String,
@@ -82,7 +82,33 @@ class TutorialBoxScope(
         state: TutorialBoxState,
         constraints: Constraints,
         onTutorialCompleted: () -> Unit,
-        onTutorialIndexChanged: (Int) -> Unit
+        onTutorialIndexChanged: (Int) -> Unit,
+        customTutorialTarget: @Composable (index: Int) -> Unit
+    ) {
+        TutorialFocusBox(currentContent = state.currentTarget)
+
+        TutorialTarget(
+            currentContent = state.currentTarget?.copy(
+                content = { customTutorialTarget(state.currentTargetIndex) }
+            ),
+            constraints = constraints
+        )
+
+        TutorialClickHandler {
+            state.currentTargetIndex++
+            onTutorialIndexChanged(state.currentTargetIndex)
+            if (state.currentTargetIndex >= state.tutorialTargets.size) {
+                onTutorialCompleted()
+            }
+        }
+    }
+
+    @Composable
+    internal fun TutorialCompose(
+        state: TutorialBoxState,
+        constraints: Constraints,
+        onTutorialCompleted: () -> Unit,
+        onTutorialIndexChanged: (Int) -> Unit,
     ) {
         TutorialFocusBox(currentContent = state.currentTarget)
 
@@ -258,7 +284,7 @@ class TutorialBoxScope(
             ) {
                 if (visible) {
                     Box {
-                        tutorialContent.content(this)
+                        tutorialContent.content?.invoke(this)
                     }
                 }
             }
@@ -294,7 +320,7 @@ internal fun calculateDisplacementToMid(
 internal fun Modifier.tutorialTarget(
     state: TutorialBoxState,
     index: Int,
-    content: @Composable BoxScope.() -> Unit,
+    content: (@Composable BoxScope.() -> Unit)? = null,
 ): Modifier = onGloballyPositioned { coordinates ->
     state.tutorialTargets[index] = TutorialBoxTarget(
         index = index,
@@ -303,31 +329,21 @@ internal fun Modifier.tutorialTarget(
     )
 }
 
-@Composable
-internal fun TutorialText(
-    title: String,
-    description: String? = null
-) {
-    Column(
-        modifier = Modifier
-            .animateContentSize()
-            .padding(horizontal = 12.dp)
-            .background(
-                color = Color.White, shape = RoundedCornerShape(8.dp)
-            )
-            .padding(12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        Text(
-            text = title,
-            textAlign = TextAlign.Center,
-            fontWeight = FontWeight.Bold
-        )
-        if (description != null) {
-            Spacer(modifier = Modifier.height(4.dp))
-            Text(
-                text = description
-            )
-        }
-    }
-}
+/**
+ * markForTutorial will adds a tag in the content to TutorialBox draws the [content]
+ * using the order of the [index].
+ *
+ * In some complex layouts you may need to pass [state] between layers
+ *
+ * But if [content] is not defined or is null, the TutorialBox will use the
+ * [TutoriaBox(tutorialTarget: @Composable (index: Int) -> Unit]
+ */
+fun Modifier.markForTutorial(
+    state: TutorialBoxState,
+    index: Int,
+    content: (@Composable BoxScope.() -> Unit)? = null,
+): Modifier = tutorialTarget(
+    state = state,
+    index = index,
+    content = content,
+)

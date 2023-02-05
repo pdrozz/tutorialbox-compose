@@ -25,7 +25,7 @@ class TutorialBoxState internal constructor(
 data class TutorialBoxTarget(
     val index: Int,
     val coordinates: LayoutCoordinates,
-    val content: @Composable BoxScope.() -> Unit
+    val content: (@Composable BoxScope.() -> Unit)? = null
 )
 
 @Composable

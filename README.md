@@ -61,7 +61,7 @@ TutorialBox(
 
 ### Step 2:
 
-Inside the TutorialBoxScope adds the **Modidier.markForTutorial()** in the content
+Inside the TutorialBoxScope adds the **Modifier.markForTutorial()** in the content
 
 ``` Kotlin
 .markForTutorial(
